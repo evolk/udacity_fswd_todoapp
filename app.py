@@ -38,7 +38,4 @@ def create_todo():
 @app.route('/')
 def index():
 
-    # return all rows as a JSON array of objects
-    all_todos = json.dumps([{r.id:r.description} for r in Todo.query.all()])
-    print(all_todos)
-    return render_template('index.html', data=all_todos)
+    return json.dumps([{'description':r.description} for r in Todo.query.all()])
