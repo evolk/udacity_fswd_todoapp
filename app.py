@@ -3,15 +3,13 @@
 
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+import json
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = \
-    'postgres://postgres@localhost:5432/todoapp'
+    'postgres://evolkvolk@localhost:5432/todoapp'
 
 db = SQLAlchemy(app)
-
-migrate = Migrate(app, db)
 
 
 class Todo(db.Model):
@@ -23,30 +21,24 @@ class Todo(db.Model):
         return f'<Todo {self.id} {self.description}>'
 
 
-# db.create_all()
+db.create_all()
+
 
 @app.route('/todos/create', methods=['POST'])
 def create_todo():
-    error = False
-    body = {}
-    try:
-        description = request.get_json()['description']
-        todo = Todo(description=description)
-        db.session.add(todo)
-        db.session.commit()
-        body['description'] = todo.description
-    except:
-        error = True
-        db.session.rollback()
-        print(sys.exc_info())
-    finally:
-        db.session.close()
-    if error:
-        abort (400)
-    else:
-        return jsonify(body)
+    description = request.get_json()['description']
+    todo = Todo(description=description)
+    db.session.add(todo)
+    db.session.commit()
+    return jsonify({
+        'description': todo.description
+    })
 
 
 @app.route('/')
 def index():
-    return render_template('index.html', data=Todo.query.all())
+
+    # return all rows as a JSON array of objects
+    all_todos = json.dumps([{r.id:r.description} for r in Todo.query.all()])
+    print(all_todos)
+    return render_template('index.html', data=all_todos)
